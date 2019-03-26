@@ -1,4 +1,4 @@
-MASTER_OBJS = master_main.o master.o
+MASTER_OBJS = master.o
 SLAVE_OBJS = slave_main.o slave.o
 CFLAGS = -Wall
 LIBS =
