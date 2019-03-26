@@ -12,5 +12,5 @@ slave: $(SLAVE_OBJS)
 	$(CC) $(SLAVE_OBJS) -o slave $(LIBS)
 
 clean:
-	rm $(OBJS) master slave
+	rm master $(MASTER_OBJS) slave $(SLAVE_OBJS)
 

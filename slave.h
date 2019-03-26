@@ -7,7 +7,7 @@ typedef struct {
 
 } Slave;
 
-bool slave_init(Slave *s);
+bool slave_init(Slave *s, const char *host, int port);
 
 #endif
 
