@@ -1,5 +1,6 @@
 *.o
 *.swo
 *.swp
-nosql-fun
+master
+slave
 

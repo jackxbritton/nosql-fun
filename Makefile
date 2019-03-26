@@ -1,13 +1,16 @@
-OBJS = main.o
+MASTER_OBJS = master_main.o master.o
+SLAVE_OBJS = slave_main.o slave.o
 CFLAGS = -Wall
 LIBS =
-TARGET = nosql-fun
 
-all: $(TARGET)
+all: master slave
 
-$(TARGET): $(OBJS)
-	$(CC) $(OBJS) -o $(TARGET) $(LIBS)
+master: $(MASTER_OBJS)
+	$(CC) $(MASTER_OBJS) -o master $(LIBS)
+
+slave: $(SLAVE_OBJS)
+	$(CC) $(SLAVE_OBJS) -o slave $(LIBS)
 
 clean:
-	rm $(TARGET) $(OBJS)
+	rm $(OBJS) master slave
 
