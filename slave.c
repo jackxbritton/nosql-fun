@@ -1,47 +1,48 @@
 #include "slave.h"
 #include <stdio.h>
+#include <stdlib.h>
 #include <stdbool.h>
 #include <sys/socket.h>
-#include <stdlib.h>
 #include <netinet/in.h>
 #include <string.h>
 #include <errno.h>
+#include <arpa/inet.h>
 
 
 #define PORT 8080
+#define TCP 0
 #define MAXBUF 1024 //Max amount of data we can send
 
 bool slave_init(Slave *s, const char *host, int port) {
 	printf("host: %s\n", host);
 	printf("port: %d\n", port);
 
-	struct sockaddr_in
+	struct sockaddr_in server_addr;
+	socklen_t addr_size;
 	char buffer[MAXBUF];
 	char *message = "#SlaveLyfe";
-	int sock = 0, server_return;
+
 
 	//Open streaming socket
-	if((Slave->slave_sockfd = socket(AF_NET, SOCK_STREAM, 0)) < 0){
+	if((s->slave_sockfd = socket(PF_INET, SOCK_STREAM, TCP)) < 0){
 		perror("Socket Initialization");
 		exit(errno);
 	}
 
-	memset(&host, '0', sizeof(host));
-	host.sin_family = AF_INET;
-	host.sin_port = htons(port);
-
-	//Normally would check to make sure the host:port address is valid here, but
-	//this is currently handled by slave_main.c
+	//Configure server address
+	server_addr.sin_family = AF_INET;
+	server_addr.sin_port = htons(port);
+	server_addr.sin_addr.s_addr = inet_addr(host);
+	memset(server_addr.sin_zero, '\0', sizeof(server_addr.sin_zero));
 
 	//Attempt to connect to the server
-	if(connect(sock, (struct sockaddr *)&host, sizeof(host)) < 0){
+	addr_size = sizeof(server_addr);
+	if(connect(s->slave_sockfd, (struct sockaddr *)&server_addr, addr_size) < 0){
 		printf("\nClient unable to connect!\n");
 		exit(errno);
 	}
 
-	send(sock, message, strlen(message), 0);
+	send(s->slave_sockfd, message, strlen(message), 0);
 	printf("Message sent!");
-	server_return = read(sock, buffer, MAXBUF);
-	printf("%s\n", buffer);
 	return true;
 }

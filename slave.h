@@ -1,6 +1,8 @@
 #ifndef SLAVE_H
 #define SLAVE_H
 
+#include <stdbool.h> //Getting compile error w/out this for some reason
+
 typedef struct {
     //Slave socket file descriptor
     int slave_sockfd;
