@@ -1,0 +1,35 @@
+<!DOCTYPE html>
+
+<html>
+
+<head></head>
+
+<body>
+
+<script>
+
+function get() {
+    const key = document.getElementById("key").value;
+    fetch("/api/" + key, { method: "GET" }).then(
+        res => res.text().then(
+            (value) => document.getElementById("value").value = value
+        )
+    );
+}
+
+function set() {
+    const key = document.getElementById("key").value;
+    const value = document.getElementById("value").value;
+    fetch("/api/" + key, { method: "POST", body: value });
+}
+
+</script>
+
+<input type="text" id="key" placeholder="key"></input>
+<input type="text" id="value" placeholder="value"></input>
+<input type="button" onclick="get()" value="Get"></input>
+<input type="button" onclick="set()" value="Set"></input>
+
+</body>
+
+</html>
