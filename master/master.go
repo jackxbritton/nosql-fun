@@ -142,6 +142,7 @@ func main() {
 			return
 		}
 		fmt.Println(string(buf))
+		fmt.Println("")
 
 	}).Methods("GET")
 	router.HandleFunc("/api/{key}", func(w http.ResponseWriter, r *http.Request) {
@@ -159,6 +160,7 @@ func main() {
 		fmt.Printf("setting key '%s'\n", key)
 		fmt.Printf("md5(%s) = %s\n", key, hexEncode(hash))
 		fmt.Printf("slave index = %d\n", slaveIndex)
+		fmt.Println("")
 
 		// Write request to the lucky slave.
 		fmt.Fprintf(*slaves[slaveIndex].conn, "set\n%s\n%d\n", key, r.ContentLength)
