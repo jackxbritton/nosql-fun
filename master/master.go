@@ -103,7 +103,7 @@ func main() {
 		slaveIndex := binary.LittleEndian.Uint32(hash) % uint32(len(slaves))
 
 		fmt.Printf("getting key '%s'\n", key)
-		fmt.Printf("md5(%s) = %s\n", key, hex.Dump(hash))
+		fmt.Printf("md5(%s) = %s\n", key, hex.EncodeToString(hash))
 		fmt.Printf("slave index = %d\n", slaveIndex)
 
 		// Write request to the lucky slave.
