@@ -101,6 +101,10 @@ func main() {
 		hash := md5.New().Sum([]byte(key))
 		slaveIndex := binary.LittleEndian.Uint32(hash) % uint32(len(slaves))
 
+		fmt.Printf("getting key '%s'\n", key)
+		fmt.Printf("md5(%s) = %s\n", key, string(hash))
+		fmt.Printf("slave index = %d\n", slaveIndex)
+
 		// Write request to the lucky slave.
 		fmt.Fprintf(*slaves[slaveIndex].conn, "get\n%s\n", key)
 
@@ -125,7 +129,6 @@ func main() {
 		}
 
 		// Copy contentLength bytes from the slave connection to the response.
-		// Unfortunately, this has to be done in chunks.
 		buf := make([]byte, contentLength)
 		if _, err := reader.Read(buf); err != nil {
 			w.WriteHeader(http.StatusInternalServerError)
@@ -151,6 +154,10 @@ func main() {
 		key := mux.Vars(r)["key"]
 		hash := md5.New().Sum([]byte(key))
 		slaveIndex := binary.LittleEndian.Uint32(hash) % uint32(len(slaves))
+
+		fmt.Printf("setting key '%s'\n", key)
+		fmt.Printf("md5(%s) = %s\n", key, string(hash))
+		fmt.Printf("slave index = %d\n", slaveIndex)
 
 		// Write request to the lucky slave.
 		fmt.Fprintf(*slaves[slaveIndex].conn, "set\n%s\n%d\n", key, r.ContentLength)
