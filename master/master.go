@@ -105,7 +105,8 @@ func main() {
 		fmt.Fprintf(*slaves[slaveIndex].conn, "get\n%s\n", key)
 
 		// First line of the slave's response is content length.
-		line, isPrefix, err := bufio.NewReader(*slaves[slaveIndex].conn).ReadLine()
+		reader := bufio.NewReader(*slaves[slaveIndex].conn)
+		line, isPrefix, err := reader.ReadLine()
 		if err != nil {
 			w.WriteHeader(http.StatusInternalServerError)
 			log.Println(err)
@@ -125,24 +126,8 @@ func main() {
 
 		// Copy contentLength bytes from the slave connection to the response.
 		// Unfortunately, this has to be done in chunks.
-		const bufSize int = 4096
-		buf := make([]byte, bufSize)
-		for contentLength > bufSize {
-			if _, err := (*slaves[slaveIndex].conn).Read(buf); err != nil {
-				w.WriteHeader(http.StatusInternalServerError)
-				log.Println(err)
-				return
-			}
-			contentLength -= bufSize
-			if _, err := w.Write(buf); err != nil {
-				w.WriteHeader(http.StatusInternalServerError)
-				log.Println(err)
-				return
-			}
-		}
-		// Read the last bit.
-		buf = buf[:contentLength]
-		if _, err := (*slaves[slaveIndex].conn).Read(buf); err != nil {
+		buf := make([]byte, contentLength)
+		if _, err := reader.Read(buf); err != nil {
 			w.WriteHeader(http.StatusInternalServerError)
 			log.Println(err)
 			return
@@ -152,6 +137,7 @@ func main() {
 			log.Println(err)
 			return
 		}
+		fmt.Println(string(buf))
 
 	}).Methods("GET")
 	router.HandleFunc("/api/{key}", func(w http.ResponseWriter, r *http.Request) {
