@@ -1,0 +1,40 @@
+#!/bin/bash
+
+if [ -z $1 ]; then
+    echo "Usage: $0 HOST:PORT"
+    exit 1
+fi
+
+set_key() {
+    echo "Setting key $2..."
+    cmd="curl -s -X 'POST' -d '$3' '$1/api/$2'"
+    echo $cmd
+    eval $cmd
+}
+
+get_key() {
+    cmd="curl -s -X 'GET' '$1/api/$2'"
+    echo $cmd
+    resp=$(eval $cmd)
+    echo $resp
+}
+
+pause() {
+    echo 'Press ENTER to continue..'
+    read
+}
+
+set_key $1 'the-first-key' 'oh yeah ba-by'
+pause
+get_key $1 'the-first-key'
+pause
+
+set_key $1 'fdhgksja' 'hey its me ur #2 key friend'
+pause
+get_key $1 'fdhgksja'
+pause
+
+set_key $1 'fbjknlms' 'hey its me, the 3rd key\n\n\n:)'
+pause
+get_key $1 'fbjknlms'
+pause
