@@ -6,7 +6,7 @@ import (
 	"net"
 	"os"
 	"strconv"
-	"time"
+	//"time"
 )
 
 func main() {
@@ -24,6 +24,8 @@ func main() {
 		fmt.Fprintln(os.Stderr, err)
 		return
 	}
+	fmt.Printf("TCP connection established with %s\n", os.Args[1])
+
 	reader := bufio.NewReader(conn)
 	//Grab first line (GET or SET)
 	for true {
@@ -36,7 +38,7 @@ func main() {
 			fmt.Println("Error: Line too long!")
 		}
 		var op = string(line)
-		fmt.Printf("Operation: %s\n", op)
+		//fmt.Printf("Operation: %s\n", op)
 
 		//Grab key value
 		line, isPrefix, err = reader.ReadLine()
@@ -49,11 +51,11 @@ func main() {
 		}
 
 		var key = string(line)
-		fmt.Printf("Key %s\n", key)
+		//fmt.Printf("Key %s\n", key)
 
 		//GET and SET routines
 		if op == "get" {
-			//TODO get(key)
+			fmt.Printf("Received GET request for KEY:%s\n", key)
 			ret := m[key]
 			var strlen = len(ret)
 			fmt.Fprintf(conn, "%d\n", strlen)
@@ -66,11 +68,11 @@ func main() {
 				fmt.Fprintln(os.Stderr, err)
 				return
 			}
-			fmt.Println("GET hit")
-			fmt.Printf("Length %d, Data: %s\n", strlen, ret)
+			fmt.Printf("Returning data of LENGTH:%d, VALUE:%s for KEY:%s to master\n\n", strlen, ret, key)
 
 		} else if op == "set" {
 			//Read data length
+			fmt.Printf("Received SET request for KEY:%s\n", key)
 			line, isPrefix, err = reader.ReadLine()
 			if err != nil {
 				fmt.Fprintln(os.Stderr, err)
@@ -80,7 +82,7 @@ func main() {
 				fmt.Println("Error: Line too long!")
 			}
 			var datalen = string(line)
-			fmt.Printf("Data length: %s\n", datalen)
+			//fmt.Printf("Data length: %s\n", datalen)
 
 			//Read in data
 			datalenint, _ := strconv.Atoi(datalen)
@@ -88,22 +90,13 @@ func main() {
 			_, _ = reader.Read(data)
 
 			s := string(data)
-			fmt.Printf("Data: %s\n", s)
+			fmt.Printf("SET KEY:%s to VALUE:%s\n\n", key, s)
 			m[key] = s
 
 		} else {
 			fmt.Println("Error: Unexpected operation. Expect \"get\" or \"set\"")
 			return
 		}
-		time.Sleep(1 * time.Second)
+		//time.Sleep(1 * time.Second)
 	}
 }
-
-//func get() {
-
-//}
-
-//func set(key, data) err {
-
-//	return
-//}
