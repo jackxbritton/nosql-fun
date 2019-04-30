@@ -4,6 +4,7 @@ import (
 	"bufio"
 	"crypto/md5"
 	"encoding/binary"
+	"encoding/hex"
 	"fmt"
 	"io"
 	"log"
@@ -102,6 +103,7 @@ func main() {
 		slaveIndex := binary.LittleEndian.Uint32(hash) % uint32(len(slaves))
 
 		fmt.Printf("getting key '%s'\n", key)
+		fmt.Printf("md5(%s) = %s\n", key, hexEncode(hash))
 		fmt.Printf("slave index = %d\n", slaveIndex)
 
 		// Write request to the lucky slave.
@@ -165,4 +167,10 @@ func main() {
 	}).Methods("POST")
 	log.Fatal(http.ListenAndServe(os.Args[1], router))
 
+}
+
+func hexEncode(src []byte) string {
+	dst := make([]byte, hex.EncodedLen(len(src)))
+	hex.Encode(dst, src)
+	return string(dst)
 }
