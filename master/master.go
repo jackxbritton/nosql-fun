@@ -3,6 +3,7 @@ package main
 import (
 	"bufio"
 	"crypto/md5"
+	"encoding"
 	"encoding/binary"
 	"fmt"
 	"io"
@@ -102,7 +103,7 @@ func main() {
 		slaveIndex := binary.LittleEndian.Uint32(hash) % uint32(len(slaves))
 
 		fmt.Printf("getting key '%s'\n", key)
-		fmt.Printf("md5(%s) = %s\n", key, string(hash))
+		fmt.Printf("md5(%s) = %s\n", key, encoding.Dump(hash))
 		fmt.Printf("slave index = %d\n", slaveIndex)
 
 		// Write request to the lucky slave.
