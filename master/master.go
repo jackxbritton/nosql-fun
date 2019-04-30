@@ -11,6 +11,7 @@ import (
 	"net/http"
 	"os"
 	"strconv"
+	"sync/atomic"
 
 	"github.com/gorilla/mux"
 )
@@ -25,6 +26,8 @@ type query struct {
 
 func main() {
 
+	log.SetFlags(log.Lshortfile)
+
 	if len(os.Args) != 3 {
 		fmt.Fprintf(os.Stderr, "Usage: %s :UI_PORT :SLAVE_PORT\n", os.Args[0])
 		return
@@ -33,11 +36,14 @@ func main() {
 	// Listen on the TCP port.
 	ln, err := net.Listen("tcp", os.Args[2])
 	if err != nil {
-		fmt.Fprintln(os.Stderr, err)
+		log.Println(err)
 		return
 	}
 
+	// Array of slaves,
+	// and a flag to signal when querying has begun.
 	var slaves []slave
+	stateFlag := int32(0)
 
 	// Launch goroutine to accept new connections.
 	go func() {
@@ -47,7 +53,15 @@ func main() {
 			// Accept incoming connections.
 			conn, err := ln.Accept()
 			if err != nil {
-				fmt.Fprintln(os.Stderr, err)
+				log.Println(err)
+				continue
+			}
+
+			// If we've moved to the query state,
+			// log an error and ignore the connection.
+			if atomic.LoadInt32(&stateFlag) == 1 {
+				conn.Close()
+				log.Println("slave attempted to join after querying had begun")
 				continue
 			}
 
@@ -69,7 +83,7 @@ func main() {
 		file, err := os.Open("master/index.html")
 		if err != nil {
 			w.WriteHeader(http.StatusInternalServerError)
-			fmt.Fprintln(os.Stderr, err)
+			log.Println(err)
 			return
 		}
 		io.Copy(w, file)
@@ -78,6 +92,9 @@ func main() {
 	router.HandleFunc("/api/{key}", func(w http.ResponseWriter, r *http.Request) {
 
 		// GET.
+
+		// Set the stateFlag to signal that queries have begun.
+		atomic.StoreInt32(&stateFlag, 1)
 
 		// Hash the key to find out which slave to send it to.
 		key := mux.Vars(r)["key"]
@@ -91,34 +108,35 @@ func main() {
 		line, isPrefix, err := bufio.NewReader(*slaves[slaveIndex].conn).ReadLine()
 		if err != nil {
 			w.WriteHeader(http.StatusInternalServerError)
-			fmt.Fprintln(os.Stderr, err)
+			log.Println(err)
 			return
 		}
 		if isPrefix {
 			w.WriteHeader(http.StatusInternalServerError)
-			fmt.Fprintln(os.Stderr, "weird")
+			log.Println("")
 			return
 		}
 		contentLength, err := strconv.Atoi(string(line))
 		if err != nil {
 			w.WriteHeader(http.StatusInternalServerError)
-			fmt.Fprintln(os.Stderr, err)
+			log.Println(err)
 			return
 		}
 
 		// Copy contentLength bytes from the slave connection to the response.
+		// Unfortunately, this has to be done in chunks.
 		const bufSize int = 4096
 		buf := make([]byte, bufSize)
 		for contentLength > bufSize {
 			if _, err := (*slaves[slaveIndex].conn).Read(buf); err != nil {
 				w.WriteHeader(http.StatusInternalServerError)
-				fmt.Fprintln(os.Stderr, err)
+				log.Println(err)
 				return
 			}
 			contentLength -= bufSize
 			if _, err := w.Write(buf); err != nil {
 				w.WriteHeader(http.StatusInternalServerError)
-				fmt.Fprintln(os.Stderr, err)
+				log.Println(err)
 				return
 			}
 		}
@@ -126,12 +144,12 @@ func main() {
 		buf = buf[:contentLength]
 		if _, err := (*slaves[slaveIndex].conn).Read(buf); err != nil {
 			w.WriteHeader(http.StatusInternalServerError)
-			fmt.Fprintln(os.Stderr, err)
+			log.Println(err)
 			return
 		}
 		if _, err := w.Write(buf); err != nil {
 			w.WriteHeader(http.StatusInternalServerError)
-			fmt.Fprintln(os.Stderr, err)
+			log.Println(err)
 			return
 		}
 
@@ -139,6 +157,9 @@ func main() {
 	router.HandleFunc("/api/{key}", func(w http.ResponseWriter, r *http.Request) {
 
 		// SET.
+
+		// Set the stateFlag to signal that queries have begun.
+		atomic.StoreInt32(&stateFlag, 1)
 
 		// Hash the key to find out which slave to send it to.
 		key := mux.Vars(r)["key"]
