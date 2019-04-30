@@ -6,11 +6,12 @@ import (
 	"net"
 	"os"
 	"strconv"
-	//"time"
+	"sync"
 )
 
 func main() {
 	//Global for now
+	var lock sync.Mutex
 	m := make(map[string]string)
 
 	if len(os.Args) != 2 {
@@ -56,14 +57,11 @@ func main() {
 		//GET and SET routines
 		if op == "get" {
 			fmt.Printf("Received GET request for KEY:%s\n", key)
-			ret := m[key]
-			var strlen = len(ret)
-			fmt.Fprintf(conn, "%d\n", strlen)
-			if err != nil {
-				fmt.Fprintln(os.Stderr, err)
-				return
-			}
-			_, err = conn.Write([]byte(ret))
+			lock.Lock()
+			ret := m[key] //Val to return to master
+			lock.Unlock()
+			var strlen = len(ret) //Bytes to return to master
+			fmt.Fprintf(conn, "%d\n%s", strlen, ret)
 			if err != nil {
 				fmt.Fprintln(os.Stderr, err)
 				return
@@ -91,7 +89,9 @@ func main() {
 
 			s := string(data)
 			fmt.Printf("SET KEY:%s to VALUE:%s\n\n", key, s)
+			lock.Lock()
 			m[key] = s
+			lock.Unlock()
 
 		} else {
 			fmt.Println("Error: Unexpected operation. Expect \"get\" or \"set\"")
